@@ -15,7 +15,14 @@ yarn build        # tsc + vite build → dist/
 yarn preview      # Serve production build locally
 ```
 
-No test suite exists in this sub-project. Type-checking is done via `tsc` during build (configured with `noEmit: true`).
+No test suite or linter configured. Type-checking is done via `tsc` during build (`noEmit: true`). To type-check without building: `npx tsc`.
+
+## Vite Configuration
+
+- **Path alias**: `@` → `./src` (configured in `vite.config.ts`)
+- **Base path**: `"./"` (relative) for Arweave subpath deployment compatibility
+- **Build-time defines**: `import.meta.env.PACKAGE_VERSION` (from `package.json`) and `import.meta.env.BUILD_TIME` (date-only ISO string) are injected at build time
+- **Source maps**: Disabled by default; enable with `VITE_SOURCEMAPS=true`
 
 ## Environment Variables
 
@@ -72,7 +79,18 @@ Two methods documented in `docs/SIGNATURE_VERIFICATION.md`:
 - **"message"** — Ed25519 `signMessage(sourceAddressBytes)`, verified with `@noble/ed25519`
 - **"transaction"** (Ledger fallback) — Memo program instruction with `ar.io-registration:<sourceAddress>`, signed but never submitted. Transaction message stored in `Signature-Data` tag as base64url
 
+**Critical constraints in `SourceAddressSigner.tsx`:**
+- The transaction fallback MUST use legacy `Transaction` (not `VersionedTransaction`) — the migration verifier parses the legacy 3-byte header format
+- `Signature-Data` uses base64url encoding (`-`, `_` instead of `+`, `/`) because standard base64 `+` chars get corrupted to spaces in the Turbo upload pipeline
+- The fallback imports `@solana/web3.js` (legacy API) for `Transaction`/`TransactionInstruction`/`PublicKey`, separate from the main `@solana/kit` v6 dependency used elsewhere
+
 Attestation tags (`App-Name`, `Version`, `Action`, `Source-Address`, `Solana-Pubkey`, `Source-Chain`, `Solana-Signature`, `Signature-Method`, `Timestamp`) are defined in `useTurboAttestation.tsx`.
+
+### Solana SDK Dependency Split
+
+Two Solana SDK packages coexist:
+- `@solana/kit` v6 — primary dependency, used for wallet adapter integration
+- `@solana/web3.js` — dynamically imported in `SourceAddressSigner.tsx` only, for legacy `Transaction` construction in the Ledger signTransaction fallback
 
 ### Polyfills
 

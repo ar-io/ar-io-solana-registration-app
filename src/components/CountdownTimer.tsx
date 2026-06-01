@@ -38,28 +38,36 @@ export function CountdownTimer() {
 
     const styles = getStyles();
 
-    // Snapshot window is open
+    // Snapshot window is open — registration closed
     if (!timeLeft) {
         return (
-            <div style={styles.wrapperUrgent}>
-                <div style={styles.urgentDot} />
+            <div style={styles.wrapperClosed}>
                 <div style={styles.textBlock}>
-                    <span style={styles.urgentTitle}>
+                    <span style={styles.closedTitle}>
                         Snapshot window is now open
                     </span>
-                    <span style={styles.urgentSub}>
-                        The migration snapshot can happen at any time. Register
-                        now to ensure your assets are included. Each Solana
-                        address can only receive from one source wallet.
+                    <span style={styles.closedSub}>
+                        The migration snapshot can happen at any time.
+                        Registration is closed — no new registrations are being
+                        accepted.
                     </span>
-                    <a
-                        href="https://ar.io/solana-migration"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={styles.learnMore}
-                    >
-                        Learn more
-                    </a>
+                    <div style={styles.closedLinks}>
+                        <a
+                            href="#/status"
+                            style={styles.learnMore}
+                        >
+                            Check your status
+                        </a>
+                        <span style={styles.closedLinkSep}>&middot;</span>
+                        <a
+                            href="https://ar.io/solana-migration"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={styles.learnMore}
+                        >
+                            Learn more
+                        </a>
+                    </div>
                 </div>
             </div>
         );
@@ -116,28 +124,17 @@ function getStyles(): Record<string, React.CSSProperties> {
             border: `1px solid ${brand.border}`,
             borderRadius: "16px",
         },
-        wrapperUrgent: {
+        wrapperClosed: {
             display: "flex",
-            alignItems: "flex-start",
-            gap: "12px",
             padding: "16px 20px",
-            background: brand.lavender,
-            border: `1px solid ${brand.primary}33`,
+            background: brand.cardSurface,
+            border: `1px solid ${brand.border}`,
             borderRadius: "16px",
-        },
-        urgentDot: {
-            width: "10px",
-            height: "10px",
-            borderRadius: "50%",
-            background: brand.primary,
-            flexShrink: 0,
-            marginTop: "4px",
-            animation: "pulse-dot 2s ease-in-out infinite",
         },
         textBlock: {
             display: "flex",
             flexDirection: "column",
-            gap: "2px",
+            gap: "4px",
             flex: 1,
             minWidth: 0,
         },
@@ -161,17 +158,27 @@ function getStyles(): Record<string, React.CSSProperties> {
             color: brand.textSecondary,
             lineHeight: 1.5,
         },
-        urgentTitle: {
+        closedTitle: {
             fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontSize: "15px",
             fontWeight: 700,
-            color: brand.black,
+            color: brand.textSecondary,
         },
-        urgentSub: {
+        closedSub: {
             fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontSize: "13px",
-            color: brand.textSecondary,
+            color: brand.textTertiary,
             lineHeight: 1.5,
+        },
+        closedLinks: {
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginTop: "4px",
+        },
+        closedLinkSep: {
+            color: brand.textTertiary,
+            fontSize: "12px",
         },
         learnMore: {
             fontFamily: "'Plus Jakarta Sans', sans-serif",

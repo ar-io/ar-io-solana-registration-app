@@ -15,6 +15,9 @@ import {
     invalidateRegistrationCache,
 } from "../services/arweave-graphql.ts";
 
+/** June 1, 2026 00:00 UTC — registration closes when snapshot window opens */
+const SNAPSHOT_WINDOW_START = new Date("2026-06-01T00:00:00Z").getTime();
+
 type RegistrationStep =
     | "idle"
     | "source_connected"
@@ -26,6 +29,8 @@ type RegistrationStep =
     | "confirmed";
 
 export function RegisterPage() {
+    const registrationClosed = Date.now() >= SNAPSHOT_WINDOW_START;
+
     const [step, setStep] = useState<RegistrationStep>("idle");
     const [sourceAddress, setSourceAddress] = useState("");
     const [sourceChain, setSourceChain] = useState<"arweave" | "ethereum">(
@@ -355,8 +360,36 @@ export function RegisterPage() {
                 be transferred based on your balances at the time of the
                 snapshot.
             </p>
-            <CountdownTimer />
+            {!registrationClosed && <CountdownTimer />}
 
+            {registrationClosed && (
+                <div style={styles.closedBanner}>
+                    <div style={styles.closedHeader}>
+                        <div style={styles.closedDot} />
+                        <span style={styles.closedTitle}>
+                            Registration is Closed
+                        </span>
+                    </div>
+                    <p style={styles.closedText}>
+                        The snapshot window is now open and new registrations are
+                        no longer accepted. If you previously registered, you can
+                        check your status below.
+                    </p>
+                    <a
+                        href="#/status"
+                        className="btn-primary"
+                        style={{
+                            textDecoration: "none",
+                            display: "inline-block",
+                            textAlign: "center",
+                        }}
+                    >
+                        Check Registration Status
+                    </a>
+                </div>
+            )}
+
+            {!registrationClosed && <>
             <hr style={styles.divider} />
 
             {/* Step 1: Connect source wallet */}
@@ -680,6 +713,7 @@ export function RegisterPage() {
                     </div>
                 </div>
             )}
+            </>}
         </div>
     );
 }
@@ -973,6 +1007,40 @@ function getStyles(): Record<string, React.CSSProperties> {
             fontSize: "14px",
             color: brand.textSecondary,
             lineHeight: 1.6,
+            margin: 0,
+        },
+        closedBanner: {
+            background: brand.errorBg,
+            border: `1px solid ${brand.error}33`,
+            borderRadius: "16px",
+            padding: "24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+        },
+        closedHeader: {
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+        },
+        closedDot: {
+            width: "10px",
+            height: "10px",
+            borderRadius: "50%",
+            background: brand.error,
+            flexShrink: 0,
+        },
+        closedTitle: {
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: "16px",
+            fontWeight: 700,
+            color: brand.error,
+        },
+        closedText: {
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: "14px",
+            color: brand.textSecondary,
+            lineHeight: 1.7,
             margin: 0,
         },
     };
