@@ -36,7 +36,32 @@ export function AssetPreview({ sourceAddress, context = "own" }: AssetPreviewPro
     }
 
     if (!assets) {
-        return null;
+        return (
+            <div style={styles.wrapper}>
+                <div style={styles.emptyContainer}>
+                    <div style={styles.emptyTitle}>No assets at the snapshot</div>
+                    <p style={styles.emptyText}>
+                        We didn't find any ar.io assets for this address in the
+                        migration snapshot ({SNAPSHOT_DATE_LABEL}). This could mean:
+                    </p>
+                    <ul style={styles.emptyReasons}>
+                        <li>
+                            The address held no ARIO, ArNS names, or stake at the
+                            snapshot
+                        </li>
+                        <li>
+                            The assets were acquired after the snapshot — only
+                            snapshot holdings migrate
+                        </li>
+                        <li>This isn't the address that held your assets</li>
+                    </ul>
+                    <p style={styles.emptyText}>
+                        Double-check you're using the Arweave, Ethereum, or Solana
+                        address that held your assets at the snapshot.
+                    </p>
+                </div>
+            </div>
+        );
     }
 
     const totalNames = assets.ownedNameCount + assets.controlledNameCount;
