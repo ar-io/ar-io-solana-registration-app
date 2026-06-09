@@ -19,7 +19,7 @@ No test suite or linter configured. Type-checking is done via `tsc` during build
 
 ## Vite Configuration
 
-- **Path alias**: `@` → `./src` (configured in `vite.config.ts`)
+- **Path alias**: `@` → `./src` (configured in `vite.config.ts`). Not currently used — all imports use relative paths
 - **Base path**: `"./"` (relative) for Arweave subpath deployment compatibility
 - **Build-time defines**: `import.meta.env.PACKAGE_VERSION` (from `package.json`) and `import.meta.env.BUILD_TIME` (date-only ISO string) are injected at build time
 - **Source maps**: Disabled by default; enable with `VITE_SOURCEMAPS=true`
@@ -35,6 +35,7 @@ Configured via env vars at build time. All prefixed with `VITE_`:
 | `VITE_ARWEAVE_FALLBACK_GATEWAY_URL` | `https://arweave-search.goldsky.com` | Fallback gateway if primary fails |
 | `VITE_ARWEAVE_EXPLORER_URL` | `https://turbo-gateway.com` | Block explorer for attestation TX links |
 | `VITE_ATTESTATION_APP_NAME` | `AR-IO-Solana-Registration` | Protocol tag on attestation data items |
+| `VITE_SNAPSHOT_HOLDINGS_SOURCE` | `/snapshot-holdings.json` | Snapshot holdings JSON: a path, full URL, or 43-char Arweave tx id |
 
 ## Architecture
 
@@ -54,15 +55,20 @@ A state machine driven by `RegistrationStep` type (`idle` → `source_connected`
 4. **Solana authorization** — `SourceAddressSigner` signs the source address with Solana wallet. Dual method: `signMessage` (default) with auto-fallback to `signTransaction` (Ledger). See `docs/SIGNATURE_VERIFICATION.md`
 5. **Confirm & register** — `RegistrationProgress` calls `useTurboAttestation` hook which uploads an Arweave data item via `TurboFactory.authenticated` (Turbo SDK). Source wallet reconnection required for signing the upload
 
+### Registration Deadline
+
+Registration is blocked after `SNAPSHOT_WINDOW_START` (June 1, 2026 00:00 UTC) in `RegisterPage.tsx`. After this date, the register page shows a "Registration is Closed" banner and hides all step cards.
+
 ### Service Layer
 
 - `arweave-graphql.ts` — GraphQL client with primary/fallback gateway pattern, 2-minute TTL cache, three query functions by owner/tag/solana-pubkey. Post-fetch `App-Name` filtering for reliability
-- `ao-asset-lookup.ts` — Live AO network asset lookup via `@ar.io/sdk` (`ARIO.mainnet()`). Queries balance, gateway status, delegations, ArNS names, vaults in parallel via `Promise.allSettled`. 5-minute cache + in-flight deduplication
+- `ao-asset-lookup.ts` — Live AO network asset lookup via `@ar.io/sdk` (`ARIO.mainnet()`). Queries balance, gateway status, delegations, ArNS names, vaults in parallel via `Promise.allSettled`. 5-minute cache + in-flight deduplication. **Note:** currently unused at runtime — `useAOAssetLookup` imports from `snapshot-asset-lookup.ts` instead
+- `snapshot-asset-lookup.ts` — Frozen snapshot holdings lookup. Loads a JSON file (from `VITE_SNAPSHOT_HOLDINGS_SOURCE`) once and caches it in-module. Supports lookup by Arweave address, ETH address (case-insensitive via EIP-55 index), or Solana destination address. Returns the same `LiveAssetSummary` shape as the live AO lookup for drop-in compatibility
 
 ### Hooks
 
 - `useTurboAttestation` — Manages the Turbo SDK upload lifecycle (create signer → upload → confirm). Handles Arweave (ArconnectSigner) and Ethereum (InjectedEthereumSigner with ethers.js BrowserProvider) paths
-- `useAOAssetLookup` — Wraps `lookupLiveAssets` with React lifecycle (cancellation, loading/error state)
+- `useAOAssetLookup` — Wraps `lookupSnapshotAssets` (frozen snapshot, not live AO) with React lifecycle (cancellation, loading/error state)
 - `useAttestationStatus` — Checks registration: localStorage first (instant for just-registered users), then Arweave GraphQL. Supports retry
 
 ### Key Patterns

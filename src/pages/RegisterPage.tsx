@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { brand } from "../App.tsx";
 import { SourceWalletConnect } from "../components/SourceWalletConnect.tsx";
 import { SolanaWalletConnect } from "../components/SolanaWalletConnect.tsx";
@@ -363,30 +363,7 @@ export function RegisterPage() {
             {!registrationClosed && <CountdownTimer />}
 
             {registrationClosed && (
-                <div style={styles.closedBanner}>
-                    <div style={styles.closedHeader}>
-                        <div style={styles.closedDot} />
-                        <span style={styles.closedTitle}>
-                            Registration is Closed
-                        </span>
-                    </div>
-                    <p style={styles.closedText}>
-                        The snapshot window is now open and new registrations are
-                        no longer accepted. If you previously registered, you can
-                        check your status below.
-                    </p>
-                    <a
-                        href="#/status"
-                        className="btn-primary"
-                        style={{
-                            textDecoration: "none",
-                            display: "inline-block",
-                            textAlign: "center",
-                        }}
-                    >
-                        Check Registration Status
-                    </a>
-                </div>
+                <ClosedBannerWithLookup />
             )}
 
             {!registrationClosed && <>
@@ -718,6 +695,49 @@ export function RegisterPage() {
     );
 }
 
+function ClosedBannerWithLookup() {
+    const [query, setQuery] = useState("");
+    const styles = getStyles();
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmed = query.trim();
+        if (!trimmed) return;
+        window.location.hash = `/status/${trimmed}`;
+    };
+
+    return (
+        <div style={styles.closedBanner}>
+            <div style={styles.closedHeader}>
+                <div style={styles.closedDot} />
+                <span style={styles.closedTitle}>Registration is Closed</span>
+            </div>
+            <p style={styles.closedText}>
+                The snapshot has been taken and new registrations are no longer
+                accepted. Look up any address below to check its migration
+                status.
+            </p>
+            <form onSubmit={handleSubmit} style={styles.closedForm}>
+                <input
+                    type="text"
+                    className="input"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Enter Arweave, Ethereum, or Solana address..."
+                    style={{ flex: 1 }}
+                />
+                <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={!query.trim()}
+                >
+                    Look Up
+                </button>
+            </form>
+        </div>
+    );
+}
+
 function StepCard({
     number,
     title,
@@ -1042,6 +1062,10 @@ function getStyles(): Record<string, React.CSSProperties> {
             color: brand.textSecondary,
             lineHeight: 1.7,
             margin: 0,
+        },
+        closedForm: {
+            display: "flex",
+            gap: "8px",
         },
     };
 }

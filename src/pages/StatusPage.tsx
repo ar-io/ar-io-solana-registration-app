@@ -3,6 +3,7 @@ import { brand } from "../App.tsx";
 import { ARWEAVE_EXPLORER_URL } from "../services/arweave-graphql.ts";
 import { AssetPreview } from "../components/AssetPreview.tsx";
 import { MigrationStats } from "../components/MigrationStats.tsx";
+import { SnapshotDownload } from "../components/SnapshotDownload.tsx";
 import { useAttestationStatus } from "../hooks/useAttestationStatus.tsx";
 
 function detectChain(address: string): "arweave" | "ethereum" | "solana" {
@@ -190,14 +191,23 @@ export function StatusPage({
             )}
 
             {lookupAddress && !loading && !error && (
-                <AssetPreview
-                    sourceAddress={
-                        chain === "solana" && registeredSourceAddress
-                            ? registeredSourceAddress
-                            : lookupAddress
-                    }
-                    context="lookup"
-                />
+                <>
+                    <AssetPreview
+                        sourceAddress={
+                            chain === "solana" && registeredSourceAddress
+                                ? registeredSourceAddress
+                                : lookupAddress
+                        }
+                        context="lookup"
+                    />
+                    <SnapshotDownload
+                        address={
+                            chain === "solana" && registeredSourceAddress
+                                ? registeredSourceAddress
+                                : lookupAddress
+                        }
+                    />
+                </>
             )}
         </div>
     );

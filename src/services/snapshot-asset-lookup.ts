@@ -141,15 +141,36 @@ export async function lookupSnapshotAssets(
 ): Promise<LiveAssetSummary | null> {
     if (!address) return null;
     const snap = await loadSnapshot();
-    // Resolve against any map rather than guessing the chain up front:
-    //   1. byArweave exact (Arweave addresses are case-sensitive base64url)
-    //   2. ETH case-insensitive (snapshot keys are EIP-55 checksummed)
-    //   3. bySolana exact — so a user can look up by their Solana (destination)
-    //      address too, not just the Arweave/ETH source they migrated from.
-    const entry =
-        snap.byArweave[address] ??
-        (ETH_RE.test(address) ? ethEntry(snap, address) : undefined) ??
-        snap.bySolana[address];
+    const entry = resolveEntry(snap, address);
     if (!entry) return null;
     return toSummary(entry);
+}
+
+/** Return the raw snapshot entry for an address (for data export). */
+export async function lookupSnapshotEntry(
+    address: string,
+): Promise<{ entry: SnapshotEntry; snapshotTimestamp: string } | null> {
+    if (!address) return null;
+    const snap = await loadSnapshot();
+    const entry = resolveEntry(snap, address);
+    if (!entry) return null;
+    return { entry, snapshotTimestamp: snap.snapshotTimestamp };
+}
+
+/** Return the snapshot source URL so the full file can be downloaded. */
+export function getSnapshotSourceUrl(): string {
+    return urlsFor(SOURCE)[0];
+}
+
+// Resolve against any map rather than guessing the chain up front:
+//   1. byArweave exact (Arweave addresses are case-sensitive base64url)
+//   2. ETH case-insensitive (snapshot keys are EIP-55 checksummed)
+//   3. bySolana exact — so a user can look up by their Solana (destination)
+//      address too, not just the Arweave/ETH source they migrated from.
+function resolveEntry(snap: SnapshotFile, address: string): SnapshotEntry | undefined {
+    return (
+        snap.byArweave[address] ??
+        (ETH_RE.test(address) ? ethEntry(snap, address) : undefined) ??
+        snap.bySolana[address]
+    );
 }
