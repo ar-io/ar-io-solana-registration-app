@@ -398,6 +398,11 @@
   animation: fade-in 0.3s ease both;
 }
 
+/* Migration stats grid entrance */
+.stats-grid {
+  animation: fade-in 0.3s ease both;
+}
+
 /* =========================================
    Responsive — mobile adjustments
    ========================================= */
@@ -434,6 +439,11 @@
 
   .asset-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  /* 4 stat tiles -> 2x2 on mobile (reads better than a tall single column) */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
   }
 
   .status-form {

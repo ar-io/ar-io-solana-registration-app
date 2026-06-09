@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { brand } from "../App.tsx";
 import { ARWEAVE_EXPLORER_URL } from "../services/arweave-graphql.ts";
 import { AssetPreview } from "../components/AssetPreview.tsx";
+import { MigrationStats } from "../components/MigrationStats.tsx";
 import { useAttestationStatus } from "../hooks/useAttestationStatus.tsx";
 
 function detectChain(address: string): "arweave" | "ethereum" | "solana" {
@@ -71,6 +72,9 @@ export function StatusPage({
                     Look Up
                 </button>
             </form>
+
+            {/* Landing state: global "by the numbers" until a specific lookup runs */}
+            {!lookupAddress && <MigrationStats />}
 
             {lookupAddress && (
                 <div style={styles.resultCard}>
