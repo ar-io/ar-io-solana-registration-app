@@ -1,6 +1,7 @@
 import React from "react";
 import { brand } from "../App.tsx";
 import { useAOAssetLookup } from "../hooks/useAOAssetLookup.tsx";
+import { SNAPSHOT_DATE_LABEL } from "../services/snapshot-asset-lookup.ts";
 
 interface AssetPreviewProps {
     sourceAddress: string;
@@ -40,12 +41,17 @@ export function AssetPreview({ sourceAddress, context = "own" }: AssetPreviewPro
     }
 
     const totalNames = assets.ownedNameCount + assets.controlledNameCount;
+    const isExitingGateway =
+        !!assets.gatewayFqdn && assets.gatewayStatus === "leaving";
     const hasAnyAssets =
         assets.balance > 0 ||
         assets.gatewayOperator ||
         assets.delegationCount > 0 ||
         totalNames > 0 ||
-        assets.vaults.length > 0;
+        assets.vaults.length > 0 ||
+        (assets.withdrawing ?? 0) > 0 ||
+        (assets.gatewayStakeBoost ?? 0) > 0 ||
+        isExitingGateway;
 
     if (!hasAnyAssets) {
         return (
@@ -85,10 +91,37 @@ export function AssetPreview({ sourceAddress, context = "own" }: AssetPreviewPro
         });
     }
 
+    if ((assets.gatewayStakeBoost ?? 0) > 0) {
+        rows.push({
+            label: "Migration Boost",
+            value: `+${formatBalance(assets.gatewayStakeBoost ?? 0)}`,
+            sub: "added to your gateway stake on Solana",
+        });
+    }
+
     if (assets.delegationCount > 0) {
         rows.push({
             label: "Delegated Stake",
             value: `${formatBalance(assets.delegatedStake)} across ${assets.delegationCount}`,
+        });
+    }
+
+    // Leaving gateways have no operator stake (it has moved into exit-vaults),
+    // so the Gateway Stake row above won't render — surface the exit explicitly
+    // so the operator understands why their stake shows as a pending withdrawal.
+    if (isExitingGateway) {
+        rows.push({
+            label: "Gateway",
+            value: "Exiting",
+            sub: assets.gatewayFqdn || undefined,
+        });
+    }
+
+    if ((assets.withdrawing ?? 0) > 0) {
+        rows.push({
+            label: "Pending Withdrawals",
+            value: formatBalance(assets.withdrawing ?? 0),
+            sub: "exit-vaults, mid-withdrawal",
         });
     }
 
@@ -121,13 +154,13 @@ export function AssetPreview({ sourceAddress, context = "own" }: AssetPreviewPro
             <div style={styles.header}>
                 <span style={styles.headerTitle}>
                     {context === "own"
-                        ? "Your Current ar.io Assets"
-                        : "Current ar.io Assets"}
+                        ? "Your ar.io Assets at the Snapshot"
+                        : "ar.io Assets at the Snapshot"}
                 </span>
                 <span style={styles.headerNote}>
                     {context === "own"
-                        ? "These are your assets right now. At the time of the snapshot, whatever you hold will be migrated to your Solana address."
-                        : "Assets held by this address at the time of the snapshot will be migrated."}
+                        ? `These are your holdings captured at the migration snapshot (${SNAPSHOT_DATE_LABEL}) — exactly what migrates to your Solana address. Activity on AO after the snapshot is not reflected here.`
+                        : `Holdings captured at the migration snapshot (${SNAPSHOT_DATE_LABEL}) — exactly what migrates to Solana.`}
                 </span>
             </div>
             <div className="asset-grid" style={styles.grid}>

@@ -25,6 +25,9 @@ export interface LiveAssetSummary {
     vaults: VaultInfo[]; // personal locked token vaults
     ownedNameCount: number; // ArNS names where address is ANT owner
     controlledNameCount: number; // ArNS names where address is ANT controller (not owner)
+    withdrawing?: number; // mARIO — pending operator/delegate exit-vaults (snapshot source only)
+    gatewayStakeBoost?: number; // mARIO — flat migration boost added to operator stake (snapshot source only)
+    gatewayStatus?: string; // "joined" | "leaving" — gateway lifecycle state at snapshot (snapshot source only)
 }
 
 let arioInstance: AoARIORead | null = null;

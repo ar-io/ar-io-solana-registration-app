@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import {
-    lookupLiveAssets,
-    type LiveAssetSummary,
-} from "../services/ao-asset-lookup.ts";
+import { type LiveAssetSummary } from "../services/ao-asset-lookup.ts";
+// Source holdings from the FROZEN migration snapshot (what actually migrates to
+// Solana), not the live AO balance — which keeps drifting and confuses users.
+import { lookupSnapshotAssets } from "../services/snapshot-asset-lookup.ts";
 
 export function useAOAssetLookup(sourceAddress: string) {
     const [loading, setLoading] = useState(false);
@@ -20,7 +20,7 @@ export function useAOAssetLookup(sourceAddress: string) {
         setLoading(true);
         setError(null);
 
-        lookupLiveAssets(sourceAddress)
+        lookupSnapshotAssets(sourceAddress)
             .then((result) => {
                 if (!cancelled) {
                     setAssets(result);
