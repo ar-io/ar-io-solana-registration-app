@@ -168,10 +168,24 @@ export function getSnapshotSourceUrl(): string {
 //   2. ETH case-insensitive (snapshot keys are EIP-55 checksummed)
 //   3. bySolana exact — so a user can look up by their Solana (destination)
 //      address too, not just the Arweave/ETH source they migrated from.
+//      If found via bySolana, the key IS the registered Solana address —
+//      patch it onto the entry so downstream sees registeredSolana.
 function resolveEntry(snap: SnapshotFile, address: string): SnapshotEntry | undefined {
-    return (
-        snap.byArweave[address] ??
-        (ETH_RE.test(address) ? ethEntry(snap, address) : undefined) ??
-        snap.bySolana[address]
-    );
+    const byArweave = snap.byArweave[address];
+    if (byArweave) return byArweave;
+
+    if (ETH_RE.test(address)) {
+        const byEth = ethEntry(snap, address);
+        if (byEth) return byEth;
+    }
+
+    const bySolana = snap.bySolana[address];
+    if (bySolana) {
+        // Entry found via Solana key — they registered by definition.
+        // Ensure the solana field is set so toSummary picks it up.
+        if (!bySolana.solana) bySolana.solana = address;
+        return bySolana;
+    }
+
+    return undefined;
 }
