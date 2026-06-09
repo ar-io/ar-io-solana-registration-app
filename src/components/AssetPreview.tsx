@@ -18,7 +18,7 @@ export function AssetPreview({ sourceAddress, context = "own" }: AssetPreviewPro
         return (
             <div style={styles.loading}>
                 <span style={styles.spinner} />
-                Looking up your assets on the ar.io network...
+                Loading your snapshot holdings...
             </div>
         );
     }
@@ -29,8 +29,7 @@ export function AssetPreview({ sourceAddress, context = "own" }: AssetPreviewPro
                 <div style={styles.errorTitle}>Unable to look up assets</div>
                 <p style={styles.errorText}>{error}</p>
                 <p style={styles.errorHint}>
-                    You can still proceed with registration. Your assets will
-                    be verified during the migration.
+                    This is usually temporary — please try again in a moment.
                 </p>
             </div>
         );
@@ -56,18 +55,25 @@ export function AssetPreview({ sourceAddress, context = "own" }: AssetPreviewPro
     if (!hasAnyAssets) {
         return (
             <div style={styles.emptyContainer}>
-                <div style={styles.emptyTitle}>No assets found</div>
+                <div style={styles.emptyTitle}>No assets at the snapshot</div>
                 <p style={styles.emptyText}>
-                    We didn't find any ar.io assets associated with this
-                    address. This could mean:
+                    We didn't find any ar.io assets for this address in the
+                    migration snapshot ({SNAPSHOT_DATE_LABEL}). This could mean:
                 </p>
                 <ul style={styles.emptyReasons}>
-                    <li>The address has no ARIO tokens or ANTs</li>
-                    <li>You may be connected with the wrong wallet</li>
+                    <li>
+                        The address held no ARIO, ArNS names, or stake at the
+                        snapshot
+                    </li>
+                    <li>
+                        The assets were acquired after the snapshot — only
+                        snapshot holdings migrate
+                    </li>
+                    <li>This isn't the address that held your assets</li>
                 </ul>
                 <p style={styles.emptyText}>
-                    If you believe this is incorrect, try disconnecting and
-                    reconnecting with a different wallet, or contact support.
+                    Double-check you're using the Arweave, Ethereum, or Solana
+                    address that held your assets at the snapshot.
                 </p>
             </div>
         );
@@ -121,20 +127,20 @@ export function AssetPreview({ sourceAddress, context = "own" }: AssetPreviewPro
         rows.push({
             label: "Pending Withdrawals",
             value: formatBalance(assets.withdrawing ?? 0),
-            sub: "exit-vaults, mid-withdrawal",
+            sub: "gateway or delegation stake being withdrawn",
         });
     }
 
     if (assets.ownedNameCount > 0) {
         rows.push({
-            label: "ANTs Owned",
+            label: "ArNS Names Owned",
             value: assets.ownedNameCount.toString(),
         });
     }
 
     if (assets.controlledNameCount > 0) {
         rows.push({
-            label: "ANTs Controlled",
+            label: "ArNS Names Controlled",
             value: assets.controlledNameCount.toString(),
         });
     }
@@ -213,6 +219,9 @@ function getStyles(): Record<string, React.CSSProperties> {
             background: brand.white,
             border: `1px solid ${brand.border}`,
             borderRadius: "16px",
+            // Match the static info-card shadow used elsewhere (e.g. StatusPage
+            // result card) so the panel reads as the same kind of surface.
+            boxShadow: "0 1px 3px rgba(35, 35, 45, 0.04)",
         },
         header: {
             display: "flex",

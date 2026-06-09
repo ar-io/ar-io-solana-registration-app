@@ -141,10 +141,15 @@ export async function lookupSnapshotAssets(
 ): Promise<LiveAssetSummary | null> {
     if (!address) return null;
     const snap = await loadSnapshot();
-    // Arweave addresses are case-sensitive (exact match); ETH addresses are not.
+    // Resolve against any map rather than guessing the chain up front:
+    //   1. byArweave exact (Arweave addresses are case-sensitive base64url)
+    //   2. ETH case-insensitive (snapshot keys are EIP-55 checksummed)
+    //   3. bySolana exact — so a user can look up by their Solana (destination)
+    //      address too, not just the Arweave/ETH source they migrated from.
     const entry =
         snap.byArweave[address] ??
-        (ETH_RE.test(address) ? ethEntry(snap, address) : undefined);
+        (ETH_RE.test(address) ? ethEntry(snap, address) : undefined) ??
+        snap.bySolana[address];
     if (!entry) return null;
     return toSummary(entry);
 }
