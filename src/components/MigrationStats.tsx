@@ -1,6 +1,6 @@
 import React from "react";
 import { brand } from "../App.tsx";
-import { SNAPSHOT_DATE_LABEL } from "../services/snapshot-asset-lookup.ts";
+import { SNAPSHOT_DATE_LABEL, getSnapshotSourceUrl } from "../services/snapshot-asset-lookup.ts";
 
 /**
  * Frozen migration-snapshot totals (2026-06-01), as produced by
@@ -38,6 +38,17 @@ export function MigrationStats() {
                         <span style={styles.label}>{stat.label}</span>
                     </div>
                 ))}
+            </div>
+            <div style={styles.footer}>
+                <a
+                    href={getSnapshotSourceUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-text"
+                    style={styles.downloadLink}
+                >
+                    Download Full Snapshot Data
+                </a>
             </div>
         </div>
     );
@@ -103,6 +114,15 @@ function getStyles(): Record<string, React.CSSProperties> {
             color: brand.textTertiary,
             textTransform: "uppercase" as const,
             letterSpacing: "0.8px",
+        },
+        footer: {
+            display: "flex",
+            justifyContent: "flex-end",
+            paddingTop: "4px",
+        },
+        downloadLink: {
+            fontSize: "13px",
+            textDecoration: "none",
         },
     };
 }
