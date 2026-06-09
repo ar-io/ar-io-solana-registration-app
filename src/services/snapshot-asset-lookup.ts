@@ -128,6 +128,7 @@ function toSummary(e: SnapshotEntry): LiveAssetSummary {
         withdrawing: n(e.withdrawing),
         gatewayStakeBoost: e.gatewayStakeBoost ? n(e.gatewayStakeBoost) : undefined,
         gatewayStatus: e.gatewayStatus,
+        registeredSolana: e.solana ?? null,
     };
 }
 

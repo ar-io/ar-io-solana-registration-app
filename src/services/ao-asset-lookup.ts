@@ -28,6 +28,7 @@ export interface LiveAssetSummary {
     withdrawing?: number; // mARIO — pending operator/delegate exit-vaults (snapshot source only)
     gatewayStakeBoost?: number; // mARIO — flat migration boost added to operator stake (snapshot source only)
     gatewayStatus?: string; // "joined" | "leaving" — gateway lifecycle state at snapshot (snapshot source only)
+    registeredSolana?: string | null; // Solana destination registered before snapshot (null = escrow)
 }
 
 let arioInstance: AoARIORead | null = null;

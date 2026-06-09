@@ -155,6 +155,8 @@ export function AssetPreview({ sourceAddress, context = "own" }: AssetPreviewPro
 
     const isOdd = rows.length % 2 !== 0;
 
+    const claimDirect = !!assets.registeredSolana;
+
     return (
         <div style={styles.wrapper}>
             <div style={styles.header}>
@@ -169,6 +171,36 @@ export function AssetPreview({ sourceAddress, context = "own" }: AssetPreviewPro
                         : `Holdings captured at the migration snapshot (${SNAPSHOT_DATE_LABEL}) — exactly what migrates to Solana.`}
                 </span>
             </div>
+
+            {claimDirect ? (
+                <div style={styles.claimBanner}>
+                    <div style={styles.claimDot} />
+                    <div style={styles.claimContent}>
+                        <span style={styles.claimTitle}>Direct Claim</span>
+                        <span style={styles.claimText}>
+                            These assets are being migrated directly to{" "}
+                            <code style={styles.claimAddress}>
+                                {assets.registeredSolana}
+                            </code>
+                        </span>
+                    </div>
+                </div>
+            ) : (
+                <div style={styles.escrowBanner}>
+                    <div style={styles.escrowDot} />
+                    <div style={styles.escrowContent}>
+                        <span style={styles.escrowTitle}>
+                            Escrow — Claimable Soon
+                        </span>
+                        <span style={styles.escrowText}>
+                            This address was not registered before the snapshot.
+                            These assets will be held in escrow and available to
+                            claim once the escrow process opens.
+                        </span>
+                    </div>
+                </div>
+            )}
+
             <div className="asset-grid" style={styles.grid}>
                 {rows.map((row, i) => (
                     <div
@@ -354,6 +386,83 @@ function getStyles(): Record<string, React.CSSProperties> {
             color: brand.textTertiary,
             margin: 0,
             fontStyle: "italic",
+        },
+        claimBanner: {
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "10px",
+            padding: "12px 14px",
+            background: brand.successBg,
+            border: `1px solid ${brand.success}33`,
+            borderRadius: "10px",
+        },
+        claimDot: {
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: brand.success,
+            flexShrink: 0,
+            marginTop: "4px",
+        },
+        claimContent: {
+            display: "flex",
+            flexDirection: "column" as const,
+            gap: "2px",
+        },
+        claimTitle: {
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: "13px",
+            fontWeight: 700,
+            color: brand.success,
+        },
+        claimText: {
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: "12px",
+            color: brand.textSecondary,
+            lineHeight: 1.5,
+        },
+        claimAddress: {
+            fontFamily: "monospace",
+            fontSize: "11px",
+            background: "rgba(26, 135, 84, 0.08)",
+            padding: "1px 5px",
+            borderRadius: "4px",
+            wordBreak: "break-all" as const,
+            color: brand.black,
+        },
+        escrowBanner: {
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "10px",
+            padding: "12px 14px",
+            background: "#FFF8EC",
+            border: "1px solid #F59E0B33",
+            borderRadius: "10px",
+        },
+        escrowDot: {
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: "#F59E0B",
+            flexShrink: 0,
+            marginTop: "4px",
+        },
+        escrowContent: {
+            display: "flex",
+            flexDirection: "column" as const,
+            gap: "2px",
+        },
+        escrowTitle: {
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: "13px",
+            fontWeight: 700,
+            color: "#B45309",
+        },
+        escrowText: {
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: "12px",
+            color: brand.textSecondary,
+            lineHeight: 1.5,
         },
     };
 }
