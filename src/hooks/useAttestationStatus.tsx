@@ -43,33 +43,33 @@ export function useAttestationStatus(
         setLoading(true);
         setError(null);
 
-        // Check localStorage first (instant, works before gateways index)
-        try {
-          const regKey = 'ar-io-registrations';
-          const regs = JSON.parse(localStorage.getItem(regKey) || '{}');
-          const lookupKey =
-            sourceChain === 'solana' ? `sol:${sourceAddress}` : sourceAddress;
-          const local = regs[lookupKey];
-          if (local) {
-            if (cancelled) return;
-            setRegistered(true);
-            setSolanaPubkey(
-              sourceChain === 'solana' ? sourceAddress : local.solanaPubkey,
-            );
-            setRegisteredSourceAddress(
-              sourceChain === 'solana' ? local.sourceAddress : sourceAddress,
-            );
-            setTxId(local.txId);
-            setRegisteredAt(
-              local.timestamp
-                ? new Date(local.timestamp).toISOString()
-                : null,
-            );
-            setLoading(false);
-            return;
+        // Check localStorage first (instant, works before gateways index).
+        // Skip for Solana lookups — they need the GraphQL cross-check to
+        // detect superseded mappings, which localStorage can't provide.
+        if (sourceChain !== 'solana') {
+          try {
+            const regKey = 'ar-io-registrations';
+            const regs = JSON.parse(localStorage.getItem(regKey) || '{}');
+            const local = regs[sourceAddress];
+            if (local) {
+              if (cancelled) return;
+              setRegistered(true);
+              setSolanaPubkey(local.solanaPubkey);
+              setRegisteredSourceAddress(sourceAddress);
+              setTxId(local.txId);
+              setRegisteredAt(
+                local.timestamp
+                  ? new Date(local.timestamp).toISOString()
+                  : null,
+              );
+              setSuperseded(false);
+              setSupersededBySolana(null);
+              setLoading(false);
+              return;
+            }
+          } catch {
+            // localStorage unavailable — continue to GraphQL
           }
-        } catch {
-          // localStorage unavailable — continue to GraphQL
         }
 
         // Arweave: query by owner; Ethereum: by Source-Address tag; Solana: by Solana-Pubkey tag
