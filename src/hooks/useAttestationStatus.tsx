@@ -16,6 +16,8 @@ export function useAttestationStatus(
   const [txId, setTxId] = useState<string | null>(null);
   const [registeredAt, setRegisteredAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [superseded, setSuperseded] = useState(false);
+  const [supersededBySolana, setSupersededBySolana] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
   const retry = useCallback(() => {
@@ -29,6 +31,8 @@ export function useAttestationStatus(
       setTxId(null);
       setRegisteredAt(null);
       setError(null);
+      setSuperseded(false);
+      setSupersededBySolana(null);
       return;
     }
 
@@ -90,12 +94,46 @@ export function useAttestationStatus(
               ? new Date(result.timestamp * 1000).toISOString()
               : null,
           );
+
+          // Cross-check: if looking up by Solana address, verify the source
+          // still points back to this Solana address. If the source has since
+          // re-registered to a different Solana wallet, this mapping is stale.
+          if (sourceChain === 'solana') {
+            try {
+              const latestForSource =
+                result.sourceChain === 'arweave'
+                  ? await queryAttestationByOwner(result.sourceAddress)
+                  : await queryAttestationByTag(result.sourceAddress);
+
+              if (cancelled) return;
+
+              if (
+                latestForSource &&
+                latestForSource.solanaPubkey !== sourceAddress
+              ) {
+                setSuperseded(true);
+                setSupersededBySolana(latestForSource.solanaPubkey);
+              } else {
+                setSuperseded(false);
+                setSupersededBySolana(null);
+              }
+            } catch {
+              // Cross-check failed — don't block, just skip
+              setSuperseded(false);
+              setSupersededBySolana(null);
+            }
+          } else {
+            setSuperseded(false);
+            setSupersededBySolana(null);
+          }
         } else {
           setRegistered(false);
           setSolanaPubkey(null);
           setRegisteredSourceAddress(null);
           setTxId(null);
           setRegisteredAt(null);
+          setSuperseded(false);
+          setSupersededBySolana(null);
         }
       } catch (err) {
         if (!cancelled) {
@@ -117,5 +155,5 @@ export function useAttestationStatus(
     };
   }, [sourceAddress, sourceChain, retryCount]);
 
-  return { loading, registered, solanaPubkey, registeredSourceAddress, txId, registeredAt, error, retry };
+  return { loading, registered, solanaPubkey, registeredSourceAddress, txId, registeredAt, error, retry, superseded, supersededBySolana };
 }

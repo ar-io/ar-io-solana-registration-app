@@ -36,6 +36,8 @@ export function StatusPage({
         txId,
         registeredAt,
         error,
+        superseded,
+        supersededBySolana,
     } = useAttestationStatus(lookupAddress, chain);
 
     const handleLookup = (e: React.FormEvent) => {
@@ -166,6 +168,32 @@ export function StatusPage({
                                                     registeredAt,
                                                 ).toLocaleString()}
                                             </span>
+                                        </div>
+                                    )}
+                                    {superseded && (
+                                        <div style={styles.supersededBanner}>
+                                            <div style={styles.supersededHeader}>
+                                                <div style={styles.supersededDot} />
+                                                <span style={styles.supersededTitle}>
+                                                    Superseded
+                                                </span>
+                                            </div>
+                                            <p style={styles.supersededText}>
+                                                This mapping is no longer active.
+                                                The source address has since
+                                                re-registered to a different
+                                                Solana wallet
+                                                {supersededBySolana && (
+                                                    <>
+                                                        :{" "}
+                                                        <code style={styles.supersededAddress}>
+                                                            {supersededBySolana}
+                                                        </code>
+                                                    </>
+                                                )}
+                                                . Only the latest registration is
+                                                honored for the migration.
+                                            </p>
                                         </div>
                                     )}
                                 </>
@@ -331,6 +359,47 @@ function getStyles(): Record<string, React.CSSProperties> {
             color: brand.textTertiary,
             marginTop: "8px",
             fontStyle: "italic",
+        },
+        supersededBanner: {
+            padding: "12px 14px",
+            background: brand.errorBg,
+            border: `1px solid ${brand.error}33`,
+            borderRadius: "10px",
+        },
+        supersededHeader: {
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "6px",
+        },
+        supersededDot: {
+            width: "8px",
+            height: "8px",
+            borderRadius: "50%",
+            background: brand.error,
+            flexShrink: 0,
+        },
+        supersededTitle: {
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: "13px",
+            fontWeight: 700,
+            color: brand.error,
+        },
+        supersededText: {
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: "12px",
+            color: brand.textSecondary,
+            lineHeight: 1.5,
+            margin: 0,
+        },
+        supersededAddress: {
+            fontFamily: "monospace",
+            fontSize: "11px",
+            background: "rgba(196, 51, 51, 0.06)",
+            padding: "1px 5px",
+            borderRadius: "4px",
+            wordBreak: "break-all" as const,
+            color: brand.black,
         },
     };
 }
