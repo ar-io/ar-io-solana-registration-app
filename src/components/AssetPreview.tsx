@@ -201,12 +201,13 @@ export function AssetPreview({ sourceAddress, context = "own" }: AssetPreviewPro
                 <div style={styles.claimBanner}>
                     <div style={styles.claimDot} />
                     <div style={styles.claimContent}>
-                        <span style={styles.claimTitle}>Direct Claim</span>
+                        <span style={styles.claimTitle}>Migrated to Solana</span>
                         <span style={styles.claimText}>
-                            These assets are being migrated directly to{" "}
+                            These assets have been delivered to{" "}
                             <code style={styles.claimAddress}>
                                 {assets.registeredSolana}
                             </code>
+                            . No further action is required.
                         </span>
                     </div>
                 </div>
@@ -219,8 +220,8 @@ export function AssetPreview({ sourceAddress, context = "own" }: AssetPreviewPro
                         </span>
                         <span style={styles.escrowText}>
                             This address was not registered before the snapshot.
-                            These assets will be held in escrow and available to
-                            claim once the escrow process opens.
+                            These assets are held in escrow and will be available
+                            to claim once the escrow process opens.
                         </span>
                     </div>
                 </div>
