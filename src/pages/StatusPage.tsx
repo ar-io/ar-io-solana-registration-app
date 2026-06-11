@@ -38,6 +38,8 @@ export function StatusPage({
         error,
         superseded,
         supersededBySolana,
+        solanaConflict,
+        solanaClaimedBySource,
     } = useAttestationStatus(lookupAddress, chain);
 
     const handleLookup = (e: React.FormEvent) => {
@@ -193,6 +195,40 @@ export function StatusPage({
                                                 )}
                                                 . Only the latest registration is
                                                 honored for the migration.
+                                            </p>
+                                        </div>
+                                    )}
+                                    {solanaConflict && (
+                                        <div style={styles.supersededBanner}>
+                                            <div style={styles.supersededHeader}>
+                                                <div style={styles.supersededDot} />
+                                                <span style={styles.supersededTitle}>
+                                                    Solana Address Conflict
+                                                </span>
+                                            </div>
+                                            <p style={styles.supersededText}>
+                                                This Solana destination address
+                                                was also claimed by a different
+                                                source
+                                                {solanaClaimedBySource && (
+                                                    <>
+                                                        :{" "}
+                                                        <code style={styles.supersededAddress}>
+                                                            {solanaClaimedBySource}
+                                                        </code>
+                                                    </>
+                                                )}
+                                                . The migration may only honor
+                                                the most recent claim. If this
+                                                is unexpected, please contact{" "}
+                                                <a
+                                                    href="https://discord.com/invite/HGG52EtTc2"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style={styles.supportLink}
+                                                >
+                                                    support
+                                                </a>.
                                             </p>
                                         </div>
                                     )}
@@ -400,6 +436,11 @@ function getStyles(): Record<string, React.CSSProperties> {
             borderRadius: "4px",
             wordBreak: "break-all" as const,
             color: brand.black,
+        },
+        supportLink: {
+            color: brand.primary,
+            textDecoration: "underline",
+            fontWeight: 600,
         },
     };
 }

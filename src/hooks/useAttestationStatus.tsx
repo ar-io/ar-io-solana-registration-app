@@ -18,6 +18,8 @@ export function useAttestationStatus(
   const [error, setError] = useState<string | null>(null);
   const [superseded, setSuperseded] = useState(false);
   const [supersededBySolana, setSupersededBySolana] = useState<string | null>(null);
+  const [solanaConflict, setSolanaConflict] = useState(false);
+  const [solanaClaimedBySource, setSolanaClaimedBySource] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
   const retry = useCallback(() => {
@@ -33,6 +35,8 @@ export function useAttestationStatus(
       setError(null);
       setSuperseded(false);
       setSupersededBySolana(null);
+      setSolanaConflict(false);
+      setSolanaClaimedBySource(null);
       return;
     }
 
@@ -43,34 +47,9 @@ export function useAttestationStatus(
         setLoading(true);
         setError(null);
 
-        // Check localStorage first (instant, works before gateways index).
-        // Skip for Solana lookups — they need the GraphQL cross-check to
-        // detect superseded mappings, which localStorage can't provide.
-        if (sourceChain !== 'solana') {
-          try {
-            const regKey = 'ar-io-registrations';
-            const regs = JSON.parse(localStorage.getItem(regKey) || '{}');
-            const local = regs[sourceAddress];
-            if (local) {
-              if (cancelled) return;
-              setRegistered(true);
-              setSolanaPubkey(local.solanaPubkey);
-              setRegisteredSourceAddress(sourceAddress);
-              setTxId(local.txId);
-              setRegisteredAt(
-                local.timestamp
-                  ? new Date(local.timestamp).toISOString()
-                  : null,
-              );
-              setSuperseded(false);
-              setSupersededBySolana(null);
-              setLoading(false);
-              return;
-            }
-          } catch {
-            // localStorage unavailable — continue to GraphQL
-          }
-        }
+        // Note: localStorage fast-path removed — all lookups now go through
+        // GraphQL so cross-checks (superseded + conflict) can run. The Status
+        // page is post-snapshot so the extra network call is acceptable.
 
         // Arweave: query by owner; Ethereum: by Source-Address tag; Solana: by Solana-Pubkey tag
         let result;
@@ -95,10 +74,13 @@ export function useAttestationStatus(
               : null,
           );
 
-          // Cross-check: if looking up by Solana address, verify the source
-          // still points back to this Solana address. If the source has since
-          // re-registered to a different Solana wallet, this mapping is stale.
+          // Cross-checks to detect stale or conflicting mappings.
           if (sourceChain === 'solana') {
+            // Solana lookup: verify the source still points back here.
+            setSuperseded(false);
+            setSupersededBySolana(null);
+            setSolanaConflict(false);
+            setSolanaClaimedBySource(null);
             try {
               const latestForSource =
                 result.sourceChain === 'arweave'
@@ -113,18 +95,33 @@ export function useAttestationStatus(
               ) {
                 setSuperseded(true);
                 setSupersededBySolana(latestForSource.solanaPubkey);
-              } else {
-                setSuperseded(false);
-                setSupersededBySolana(null);
               }
             } catch {
-              // Cross-check failed — don't block, just skip
-              setSuperseded(false);
-              setSupersededBySolana(null);
+              // Cross-check failed — don't block
             }
           } else {
+            // Arweave/ETH lookup: verify the Solana address hasn't been
+            // claimed by a different source in a more recent attestation.
             setSuperseded(false);
             setSupersededBySolana(null);
+            setSolanaConflict(false);
+            setSolanaClaimedBySource(null);
+            try {
+              const latestForSolana =
+                await queryAttestationBySolanaPubkey(result.solanaPubkey);
+
+              if (cancelled) return;
+
+              if (
+                latestForSolana &&
+                latestForSolana.sourceAddress !== result.sourceAddress
+              ) {
+                setSolanaConflict(true);
+                setSolanaClaimedBySource(latestForSolana.sourceAddress);
+              }
+            } catch {
+              // Cross-check failed — don't block
+            }
           }
         } else {
           setRegistered(false);
@@ -134,6 +131,8 @@ export function useAttestationStatus(
           setRegisteredAt(null);
           setSuperseded(false);
           setSupersededBySolana(null);
+          setSolanaConflict(false);
+          setSolanaClaimedBySource(null);
         }
       } catch (err) {
         if (!cancelled) {
@@ -155,5 +154,5 @@ export function useAttestationStatus(
     };
   }, [sourceAddress, sourceChain, retryCount]);
 
-  return { loading, registered, solanaPubkey, registeredSourceAddress, txId, registeredAt, error, retry, superseded, supersededBySolana };
+  return { loading, registered, solanaPubkey, registeredSourceAddress, txId, registeredAt, error, retry, superseded, supersededBySolana, solanaConflict, solanaClaimedBySource };
 }
