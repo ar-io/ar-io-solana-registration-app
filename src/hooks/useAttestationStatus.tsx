@@ -4,6 +4,10 @@ import {
   queryAttestationByTag,
   queryAttestationBySolanaPubkey,
 } from '../services/arweave-graphql.ts';
+import {
+  verifySolanaSignature,
+  type SignatureVerificationResult,
+} from '../services/verify-solana-signature.ts';
 
 export function useAttestationStatus(
   sourceAddress: string,
@@ -20,6 +24,7 @@ export function useAttestationStatus(
   const [supersededBySolana, setSupersededBySolana] = useState<string | null>(null);
   const [solanaConflict, setSolanaConflict] = useState(false);
   const [solanaClaimedBySource, setSolanaClaimedBySource] = useState<string | null>(null);
+  const [signatureVerification, setSignatureVerification] = useState<SignatureVerificationResult | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
   const retry = useCallback(() => {
@@ -37,6 +42,7 @@ export function useAttestationStatus(
       setSupersededBySolana(null);
       setSolanaConflict(false);
       setSolanaClaimedBySource(null);
+      setSignatureVerification(null);
       return;
     }
 
@@ -73,6 +79,17 @@ export function useAttestationStatus(
               ? new Date(result.timestamp * 1000).toISOString()
               : null,
           );
+
+          // Verify the Solana signature (non-blocking, runs in parallel)
+          verifySolanaSignature({
+            solanaSignature: result.solanaSignature,
+            signatureMethod: result.signatureMethod,
+            signatureData: result.signatureData,
+            sourceAddress: result.sourceAddress,
+            solanaPubkey: result.solanaPubkey,
+          }).then((v) => {
+            if (!cancelled) setSignatureVerification(v);
+          });
 
           // Cross-checks to detect stale or conflicting mappings.
           if (sourceChain === 'solana') {
@@ -133,6 +150,7 @@ export function useAttestationStatus(
           setSupersededBySolana(null);
           setSolanaConflict(false);
           setSolanaClaimedBySource(null);
+          setSignatureVerification(null);
         }
       } catch (err) {
         if (!cancelled) {
@@ -154,5 +172,5 @@ export function useAttestationStatus(
     };
   }, [sourceAddress, sourceChain, retryCount]);
 
-  return { loading, registered, solanaPubkey, registeredSourceAddress, txId, registeredAt, error, retry, superseded, supersededBySolana, solanaConflict, solanaClaimedBySource };
+  return { loading, registered, solanaPubkey, registeredSourceAddress, txId, registeredAt, error, retry, superseded, supersededBySolana, solanaConflict, solanaClaimedBySource, signatureVerification };
 }

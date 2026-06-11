@@ -40,6 +40,7 @@ export function StatusPage({
         supersededBySolana,
         solanaConflict,
         solanaClaimedBySource,
+        signatureVerification,
     } = useAttestationStatus(lookupAddress, chain);
 
     const handleLookup = (e: React.FormEvent) => {
@@ -170,6 +171,39 @@ export function StatusPage({
                                                     registeredAt,
                                                 ).toLocaleString()}
                                             </span>
+                                        </div>
+                                    )}
+                                    {signatureVerification && (
+                                        <div style={styles.statusRow}>
+                                            <span style={styles.label}>
+                                                Solana Signature
+                                            </span>
+                                            <span
+                                                style={{
+                                                    ...styles.statusValue,
+                                                    color:
+                                                        signatureVerification.status === "verified"
+                                                            ? brand.success
+                                                            : signatureVerification.status === "invalid"
+                                                              ? brand.error
+                                                              : brand.textTertiary,
+                                                }}
+                                            >
+                                                {signatureVerification.status === "verified"
+                                                    ? "\u2713 Verified"
+                                                    : signatureVerification.status === "invalid"
+                                                      ? "\u2717 Invalid"
+                                                      : "Unable to verify"}
+                                            </span>
+                                            {signatureVerification.status !== "verified" && (
+                                                <span style={styles.verifyHint}>
+                                                    {signatureVerification.status === "invalid"
+                                                        ? "The signature does not match the source address and Solana public key."
+                                                        : "reason" in signatureVerification
+                                                          ? signatureVerification.reason
+                                                          : ""}
+                                                </span>
+                                            )}
                                         </div>
                                     )}
                                     {superseded && (
@@ -436,6 +470,12 @@ function getStyles(): Record<string, React.CSSProperties> {
             borderRadius: "4px",
             wordBreak: "break-all" as const,
             color: brand.black,
+        },
+        verifyHint: {
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: "11px",
+            color: brand.textTertiary,
+            marginTop: "2px",
         },
         supportLink: {
             color: brand.primary,

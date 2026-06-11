@@ -27,6 +27,9 @@ export interface AttestationResult {
     solanaPubkey: string;
     sourceChain: "arweave" | "ethereum";
     timestamp: number; // seconds since epoch (from Timestamp tag)
+    solanaSignature?: string;
+    signatureMethod?: "message" | "transaction";
+    signatureData?: string; // base64url, transaction method only
 }
 
 function buildAttestationQuery(extraTagFilter?: string): string {
@@ -91,12 +94,20 @@ function parseEdge(edge: GQLEdge): AttestationResult | null {
         ? Math.floor(Number(tagTimestamp) / 1000)
         : 0;
 
+    const solanaSignature = getTagValue(node.tags, "Solana-Signature");
+    const signatureMethod = getTagValue(node.tags, "Signature-Method") as
+        | "message" | "transaction" | undefined;
+    const signatureData = getTagValue(node.tags, "Signature-Data");
+
     return {
         txId: node.id,
         sourceAddress,
         solanaPubkey,
         sourceChain,
         timestamp,
+        ...(solanaSignature ? { solanaSignature } : {}),
+        ...(signatureMethod ? { signatureMethod } : {}),
+        ...(signatureData ? { signatureData } : {}),
     };
 }
 
